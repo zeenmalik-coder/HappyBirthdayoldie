@@ -347,9 +347,9 @@
 <body>
 
     <!-- HIDDEN AUDIO VIDEO (Plays sound after unlock) -->
-   <audio id="bg-audio" loop>
-    <source src="assets/a1.MP4" type="video/mp4"> 
-</audio>
+ <video id="bg-audio" loop playsinline webkit-playsinline muted style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;">
+    <source src="assets/a1.MP4" type="video/mp4">
+</video>
 
     <!-- MYSTERY VAULT -->
     <div id="vault-screen">
@@ -492,144 +492,147 @@
         </section>
     </div>
 
-    <script>
-        // --- VAULT LOGIC ---
-        const SECRET = "panday g";
+ <script>
+    // --- VAULT LOGIC ---
+    const SECRET = "panday g";
+    
+    function unlockVault() {
+        const input = document.getElementById('secret-code').value.toLowerCase().trim();
+        const vault = document.getElementById('vault-screen');
+        const main = document.getElementById('main-site');
+        const err = document.getElementById('error-msg');
+        const ring = document.querySelector('.vault-ring');
         
-        function unlockVault() {
-            const input = document.getElementById('secret-code').value.toLowerCase().trim();
-            const vault = document.getElementById('vault-screen');
-            const main = document.getElementById('main-site');
-            const err = document.getElementById('error-msg');
-            const ring = document.querySelector('.vault-ring');
-            const audioVideo = document.getElementById('audio-video');
+        // FIXED: Changed 'audio-video' to 'bg-audio' to match your HTML ID
+        const audioVideo = document.getElementById('bg-audio'); 
 
-            if (input === SECRET) {
-                vault.classList.add('unlocked');
-                
-                // Play hidden audio video after unlock (browser allows audio after user interaction)
-              setTimeout(() => {
-    audio.volume = 0.7;
-    audio.play().catch(e => console.log("Audio play failed:", e));
-}, 600);
+        if (input === SECRET) {
+            vault.classList.add('unlocked');
+            
+            // Play hidden audio video after unlock
+            setTimeout(() => {
+                // We MUST unmute it after user interaction (the unlock click)
+                audioVideo.muted = false; 
+                audioVideo.play().catch(e => console.log("Audio play failed:", e));
+            }, 600);
 
-                setTimeout(() => {
-                    main.style.display = 'block';
-                    void main.offsetWidth; 
-                    main.classList.add('visible');
-                }, 500);
-                
-                launchFireworks();
-                startTypewriter();
-                initScrollAnimations();
-            } else {
-                ring.classList.add('shake');
-                err.style.opacity = '1';
-                document.getElementById('secret-code').value = '';
-                setTimeout(() => {
-                    ring.classList.remove('shake');
-                    err.style.opacity = '0';
-                }, 1000);
-            }
+            setTimeout(() => {
+                main.style.display = 'block';
+                void main.offsetWidth; 
+                main.classList.add('visible');
+            }, 500);
+            
+            launchFireworks();
+            startTypewriter();
+            initScrollAnimations();
+        } else {
+            ring.classList.add('shake');
+            err.style.opacity = '1';
+            document.getElementById('secret-code').value = '';
+            setTimeout(() => {
+                ring.classList.remove('shake');
+                err.style.opacity = '0';
+            }, 1000);
         }
+    }
 
-        document.getElementById('secret-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') unlockVault();
-        });
+    document.getElementById('secret-code').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') unlockVault();
+    });
 
-        window.onload = () => {
-            document.getElementById('secret-code').focus();
-        };
+    window.onload = () => {
+        document.getElementById('secret-code').focus();
+    };
 
-        // --- TYPEWRITER EFFECT ---
-        function startTypewriter() {
-            const text = "To my Mery Pyary Shohr,\n\nYou are the calm in my chaos and the gold in my life. Since July 10, 2026, you have been my safest place, my greatest laugh, and my forever baby.\n\nHappy 33rd Birthday, Mere Jan.";
-            const el = document.getElementById('typewriter');
-            const sig = document.getElementById('signature');
-            let i = 0;
+    // --- TYPEWRITER EFFECT ---
+    function startTypewriter() {
+        const text = "To my Mery Pyary Shohr,\n\nYou are the calm in my chaos and the gold in my life. Since July 10, 2026, you have been my safest place, my greatest laugh, and my forever baby.\n\nHappy 33rd Birthday, Mere Jan.";
+        const el = document.getElementById('typewriter');
+        const sig = document.getElementById('signature');
+        let i = 0;
 
-            function type() {
-                if (i < text.length) {
-                    if (text.charAt(i) === '\n') {
-                        el.innerHTML += '<br>';
-                    } else {
-                        el.innerHTML += text.charAt(i);
-                    }
-                    i++;
-                    setTimeout(type, 40);
+        function type() {
+            if (i < text.length) {
+                if (text.charAt(i) === '\n') {
+                    el.innerHTML += '<br>';
                 } else {
-                    el.innerHTML += '<span class="cursor"></span>';
-                    setTimeout(() => sig.classList.add('show'), 500);
+                    el.innerHTML += text.charAt(i);
                 }
-            }
-            type();
-        }
-
-        // --- SCROLL ANIMATIONS ---
-        function initScrollAnimations() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) entry.target.classList.add('visible');
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.polaroid').forEach(item => observer.observe(item));
-        }
-
-        // --- PHYSICS FIREWORKS ---
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        let particles = [];
-        const colors = ['#d4af37', '#ffffff', '#fcf6ba'];
-
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y; this.color = color;
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 6 + 2;
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
-                this.alpha = 1; this.friction = 0.96; this.gravity = 0.1;
-            }
-            update() {
-                this.vx *= this.friction; this.vy *= this.friction;
-                this.vy += this.gravity;
-                this.x += this.vx; this.y += this.vy;
-                this.alpha -= 0.015;
-            }
-            draw() {
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
-                ctx.fillStyle = this.color; ctx.fill();
+                i++;
+                setTimeout(type, 40);
+            } else {
+                el.innerHTML += '<span class="cursor"></span>';
+                setTimeout(() => sig.classList.add('show'), 500);
             }
         }
+        type();
+    }
 
-        function launchFireworks() {
-            for(let k=0; k<5; k++) {
-                setTimeout(() => {
-                    const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
-                    const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
-                    for(let i=0; i<80; i++) particles.push(new Particle(x, y, colors[Math.floor(Math.random()*colors.length)]));
-                }, k * 200);
-            }
-            animate();
+    // --- SCROLL ANIMATIONS ---
+    function initScrollAnimations() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.polaroid').forEach(item => observer.observe(item));
+    }
+
+    // --- PHYSICS FIREWORKS ---
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const colors = ['#d4af37', '#ffffff', '#fcf6ba'];
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 6 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = 1; this.friction = 0.96; this.gravity = 0.1;
         }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update(); particles[i].draw();
-                if (particles[i].alpha <= 0) particles.splice(i, 1);
-            }
+        update() {
+            this.vx *= this.friction; this.vy *= this.friction;
+            this.vy += this.gravity;
+            this.x += this.vx; this.y += this.vy;
+            this.alpha -= 0.015;
         }
+        draw() {
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+            ctx.fillStyle = this.color; ctx.fill();
+        }
+    }
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        });
-    </script>
+    function launchFireworks() {
+        for(let k=0; k<5; k++) {
+            setTimeout(() => {
+                const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+                const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
+                for(let i=0; i<80; i++) particles.push(new Particle(x, y, colors[Math.floor(Math.random()*colors.length)]));
+            }, k * 200);
+        }
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update(); particles[i].draw();
+            if (particles[i].alpha <= 0) particles.splice(i, 1);
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    });
+</script> <
 </body>
 </html>
