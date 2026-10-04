@@ -347,9 +347,9 @@
 <body>
 
     <!-- HIDDEN AUDIO VIDEO (Plays sound after unlock) -->
-    <video id="audio-video" style="display:none;" loop>
-        <source src="assets/a1.MP4" type="video/mp4">
-    </video>
+   <audio id="bg-audio" loop>
+    <source src="assets/a1.MP4" type="video/mp4"> 
+</audio>
 
     <!-- MYSTERY VAULT -->
     <div id="vault-screen">
@@ -508,10 +508,10 @@
                 vault.classList.add('unlocked');
                 
                 // Play hidden audio video after unlock (browser allows audio after user interaction)
-                setTimeout(() => {
-                    audioVideo.muted = false;
-                    audioVideo.play().catch(e => console.log("Audio play failed:", e));
-                }, 600);
+              setTimeout(() => {
+    audio.volume = 0.7;
+    audio.play().catch(e => console.log("Audio play failed:", e));
+}, 600);
 
                 setTimeout(() => {
                     main.style.display = 'block';
