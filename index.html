@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arham | The Vault</title>
+    
+    <!-- PREMIUM FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --bg-black: #050505;
+            --gold: #d4af37;
+            --gold-dim: #5a4a1a;
+            --text-white: #f5f5f5;
+            --font-head: 'Cinzel', serif;
+            --font-body: 'Raleway', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 { font-family: var(--font-head); letter-spacing: 2px; }
+        
+        /* --- MYSTERY VAULT LOCK SCREEN --- */
+        #vault-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: #000; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s;
+        }
+        
+        #vault-screen.unlocked {
+            transform: scale(1.2); opacity: 0; pointer-events: none;
+        }
+
+        .vault-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 300px;
+            height: 300px;
+        }
+
+        .vault-ring {
+            position: absolute;
+            width: 220px; height: 220px; 
+            border: 1px solid var(--gold-dim);
+            border-radius: 50%;
+            z-index: 1;
+            animation: pulseRing 3s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .vault-ring::before {
+            content: ''; position: absolute; inset: -15px; 
+            border: 1px solid rgba(212,175,55,0.1);
+            border-radius: 50%; animation: spin 15s linear infinite;
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { box-shadow: 0 0 20px rgba(212,175,55,0.05); border-color: var(--gold-dim); }
+            50% { box-shadow: 0 0 40px rgba(212,175,55,0.2); border-color: var(--gold); }
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .vault-input {
+            position: relative;
+            z-index: 10;
+            background: transparent; border: none; border-bottom: 1px solid var(--gold);
+            color: var(--gold); font-family: var(--font-head); font-size: 1.2rem;
+            text-align: center; outline: none; width: 100%; padding: 15px 0;
+            letter-spacing: 4px; text-transform: uppercase;
+            cursor: text;
+        }
+        .vault-input::placeholder { color: rgba(212,175,55,0.4); font-size: 0.8rem; letter-spacing: 2px; }
+
+        .vault-btn {
+            margin-top: 50px; padding: 15px 50px; background: transparent;
+            border: 1px solid var(--gold); color: var(--gold); font-family: var(--font-head);
+            cursor: pointer; transition: 0.3s; letter-spacing: 3px; font-size: 0.9rem;
+            z-index: 10;
+        }
+        .vault-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 30px rgba(212,175,55,0.5); }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .access-denied {
+            color: #ff3333; margin-top: 20px; font-size: 0.8rem; letter-spacing: 3px;
+            opacity: 0; transition: 0.3s; font-family: var(--font-head); height: 20px;
+        }
+
+        /* --- MAIN CONTENT --- */
+        #main-site { opacity: 0; transition: opacity 2s ease; min-height: 100vh; display: none; }
+        #main-site.visible { opacity: 1; display: block; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; 
+            padding: 30px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0) 100%);
+        }
+        .logo { 
+            font-family: var(--font-head); color: var(--gold); 
+            font-size: 1.4rem; letter-spacing: 4px; font-weight: 700;
+        }
+        .nav-links a {
+            color: var(--text-white); text-decoration: none; margin-left: 40px;
+            font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;
+            position: relative; opacity: 0.7; transition: 0.3s;
+        }
+        .nav-links a:hover { opacity: 1; color: var(--gold); }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 1px;
+            background: var(--gold); transition: 0.4s;
+        }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* --- HERO SECTION WITH LED VIDEO BACKGROUND --- */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+            padding: 120px 20px 60px;
+        }
+
+        /* Full-screen video background */
+        .hero-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+
+        /* Dark overlay to ensure text readability */
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: -1;
+        }
+
+        /* FIXED: Responsive ARHAM watermark that fits on mobile */
+        .hero-bg-text {
+            position: absolute; 
+            font-size: clamp(15vw, 25vw, 30vw); /* Scales properly on all devices */
+            color: rgba(255,255,255,0.05);
+            font-family: var(--font-head); 
+            white-space: nowrap; 
+            z-index: -1;
+            user-select: none; 
+            pointer-events: none; 
+            top: 50%; 
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            letter-spacing: 10px; /* Reduced spacing for mobile fit */
+        }
+
+        .hero h1 { 
+            font-size: clamp(2rem, 5vw, 4.5rem); margin-bottom: 10px; line-height: 1.2; 
+            text-transform: uppercase;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+        .hero .subtitle {
+            color: var(--gold); font-family: var(--font-head); font-style: italic;
+            font-size: clamp(1.5rem, 3.5vw, 3rem); margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+        .hero p { 
+            color: #ccc; max-width: 500px; line-height: 1.8; font-size: 0.85rem; 
+            letter-spacing: 1px; margin-bottom: 30px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        /* --- POLAROID GALLERY --- */
+        .gallery-section { padding: 100px 5%; }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-header h2 { font-size: 2.5rem; color: var(--gold); margin-bottom: 10px; }
+        .section-header p { color: #666; font-style: italic; }
+
+        .polaroid-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .polaroid {
+            background: #fff;
+            padding: 15px 15px 50px 15px;
+            width: 220px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transform: rotate(-2deg);
+            transition: 0.4s ease;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px) rotate(-2deg);
+        }
+        
+        .polaroid:nth-child(even) { transform: rotate(2deg) translateY(30px); }
+        .polaroid:nth-child(3n) { transform: rotate(-1deg) translateY(30px); }
+        
+        .polaroid.visible { opacity: 1; transform: translateY(0) rotate(-2deg); }
+        .polaroid:nth-child(even).visible { transform: translateY(0) rotate(2deg); }
+        .polaroid:nth-child(3n).visible { transform: translateY(0) rotate(-1deg); }
+
+        .polaroid:hover {
+            transform: scale(1.1) rotate(0deg) !important;
+            z-index: 10;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .polaroid img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            filter: sepia(20%) contrast(1.1);
+            background: #eee;
+        }
+
+        .polaroid-caption {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Raleway', sans-serif;
+            font-size: 0.8rem;
+            color: #333;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* --- BABY SECTION (5 CIRCLES) --- */
+        .baby-section {
+            padding: 120px 10%; text-align: center;
+            background: radial-gradient(circle at center, #111 0%, #000 70%);
+            border-top: 1px solid rgba(212,175,55,0.1);
+            border-bottom: 1px solid rgba(212,175,55,0.1);
+        }
+        
+        .baby-gallery {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .baby-circle {
+            width: 180px; height: 180px; border-radius: 50%; 
+            border: 2px solid var(--gold); 
+            overflow: hidden; position: relative;
+            box-shadow: 0 0 30px rgba(212,175,55,0.1);
+            background: #111;
+            transition: 0.4s;
+        }
+        
+        .baby-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(212,175,55,0.3);
+            border-color: #fcf6ba;
+        }
+
+        .baby-circle img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .baby-badge {
+            margin-top: 30px; font-family: var(--font-head); color: var(--gold);
+            letter-spacing: 3px; font-size: 0.9rem;
+        }
+
+        /* --- OUR STORY SECTION --- */
+        .story-section {
+            padding: 120px 10%; max-width: 800px; margin: 0 auto; text-align: center;
+        }
+        .story-date {
+            color: var(--gold); font-family: var(--font-head); font-size: 1.3rem;
+            letter-spacing: 3px; margin-bottom: 30px; display: block;
+        }
+        .story-text {
+            font-size: 1.1rem; line-height: 2; color: #aaa;
+        }
+
+        /* --- LETTER SECTION --- */
+        .letter-section {
+            padding: 120px 20px; max-width: 800px; margin: 0 auto; text-align: center;
+            border-top: 1px solid rgba(212,175,55,0.1);
+        }
+        .typewriter-text {
+            font-family: var(--font-head); font-size: 1.4rem; line-height: 2.5;
+            color: var(--text-white); min-height: 200px;
+        }
+        .cursor { display: inline-block; width: 2px; height: 1.5rem; background: var(--gold); animation: blink 1s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .signature {
+            margin-top: 60px; font-family: var(--font-head); font-size: 2rem;
+            color: var(--gold); font-style: italic; opacity: 0; transition: 1s;
+        }
+        .signature.show { opacity: 1; }
+
+        /* --- CANVAS --- */
+        #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+        @media (max-width: 768px) {
+            nav { padding: 20px; }
+            .nav-links { display: none; }
+            .polaroid { width: 160px; padding: 10px 10px 40px 10px; }
+            .baby-circle { width: 140px; height: 140px; }
+            .baby-gallery { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HIDDEN AUDIO VIDEO (Plays sound after unlock) -->
+    <video id="audio-video" style="display:none;" loop>
+        <source src="assets/a1.MP4" type="video/mp4">
+    </video>
+
+    <!-- MYSTERY VAULT -->
+    <div id="vault-screen">
+        <div class="vault-container">
+            <div class="vault-ring"></div>
+            <input type="text" class="vault-input" id="secret-code" placeholder="ENTER KEY" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="vault-btn" onclick="unlockVault()">UNLOCK</button>
+        <div class="access-denied" id="error-msg">ACCESS DENIED</div>
+    </div>
+
+    <!-- MAIN SITE -->
+    <div id="main-site">
+        <canvas id="canvas"></canvas>
+        
+        <nav>
+            <div class="logo">A • S</div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#moments">His Moments</a>
+                <a href="#baby">The Beginning</a>
+                <a href="#story">Our Story</a>
+                <a href="#letter">Letter</a>
+            </div>
+        </nav>
+
+        <!-- HERO WITH LED VIDEO BACKGROUND -->
+        <section class="hero" id="home">
+            <!-- FULL SCREEN VIDEO BACKGROUND -->
+            <video class="hero-video-bg" autoplay loop muted playsinline>
+                <source src="assets/v3.mp4" type="video/mp4">
+            </video>
+            
+            <!-- DARK OVERLAY FOR TEXT READABILITY -->
+            <div class="hero-overlay"></div>
+            
+            <div class="hero-bg-text">ARHAM</div>
+
+            <h1>HAPPY BIRTHDAY</h1>
+            <div class="subtitle">Mere Jan</div>
+            <p>Est. October 05, 1993 | My Husband Since July 10, 2026</p>
+            <button class="vault-btn" onclick="launchFireworks()">CELEBRATE</button>
+        </section>
+  <section class="baby-section" id="baby">
+            <h2 style="font-size: 2.2rem; margin-bottom: 40px; color: var(--gold);">Where It All Started</h2>
+            
+            <div class="baby-gallery">
+                <div class="baby-circle">
+                    <img src="arham/baby1.JPG" alt="Baby 1">
+                </div>
+                <div class="baby-circle">
+                    <img src="arham/baby2.JPG" alt="Baby 2">
+                </div>
+                <div class="baby-circle">
+                    <img src="arham/baby3.PNG" alt="Baby 3">
+                </div>
+                <div class="baby-circle">
+                    <img src="arham/baby4.PNG" alt="Baby 4">
+                </div>
+              
+            </div>
+            
+            <div class="baby-badge">LITTLE PANDAY G • 1993</div>
+            <p style="color: #666; margin-top: 30px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.8;">
+               Look at my little Panday G!! It’s honestly so cute seeing this little version of you and knowing that this tiny Kuchu Puchu would one day grow up to become my Mere Jaan. 
+               <br> We didn’t even know each other before July 10, 2026, and yet somehow you became such a special part of my life so quickly. Happy birthday to the little boy in this picture and to the man who means so much to me today. 
+               <br>  May Allah always keep you happy, protected, and blessed. Ameen. 
+            </p>
+        </section>
+
+        <!-- HIS MOMENTS POLAROID GALLERY -->
+        <section class="gallery-section" id="moments">
+            <div class="section-header">
+                <h2>The grown-up version of my Kuchu Puchu</h2>
+                <p>ONLY YOU.</p>
+            </div>
+            
+            <div class="polaroid-grid">
+                <div class="polaroid">
+                    <img src="arham/1.JPG" alt="Him">
+                    <div class="polaroid-caption">Panday G</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/2.JPG" alt="Him">
+                    <div class="polaroid-caption">Kuchu Puchu</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/3.JPG" alt="Him">
+                    <div class="polaroid-caption">MISTER Babu</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/4.JPG" alt="Him">
+                    <div class="polaroid-caption">Handsome Boy</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/5.JPG" alt="Him">
+                    <div class="polaroid-caption">Mr. Always Right</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/6.JPG" alt="Him">
+                    <div class="polaroid-caption">Sigma Boy</div>
+                </div>
+                 <div class="polaroid">
+                    <img src="arham/7.JPG" alt="Him">
+                    <div class="polaroid-caption">Captain Mood Swings</div>
+                </div>
+               <div class="polaroid">
+                    <img src="arham/8.JPG" alt="Him">
+                    <div class="polaroid-caption">Red Flag</div>
+                </div>
+                <div class="polaroid">
+                    <img src="arham/9.JPG" alt="Him">
+                    <div class="polaroid-caption">Cute Giant Headache</div>
+                </div>
+                 <div class="polaroid">
+                    <img src="arham/10.JPG" alt="Him">
+                    <div class="polaroid-caption">My Janu</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BABY SECTION (5 CIRCLES) -->
+      
+
+        <!-- OUR STORY SECTION -->
+        <section class="story-section" id="story">
+            <span class="story-date">JULY 10, 2026</span>
+            <h2 style="font-size: 2.5rem; margin-bottom: 30px;">The Day We Became One</h2>
+            <p class="story-text">
+               Since 10 July, it hasn’t always been easy. We’ve fought, annoyed each other, misunderstood each other, and probably tested each other’s patience more times than we can count . 
+               <br>But through all of it, we’re still here, still choosing each other, and still making our own little memories. 
+               <br>And maybe that’s what makes our story special — it isn’t perfect, it’s ours.
+            </p>
+        </section>
+
+        <!-- LETTER -->
+        <section class="letter-section" id="letter">
+            <div class="typewriter-text" id="typewriter"></div>
+            <div class="signature" id="signature">- SHAZEEN</div>
+        </section>
+    </div>
+
+    <script>
+        // --- VAULT LOGIC ---
+        const SECRET = "panday g";
+        
+        function unlockVault() {
+            const input = document.getElementById('secret-code').value.toLowerCase().trim();
+            const vault = document.getElementById('vault-screen');
+            const main = document.getElementById('main-site');
+            const err = document.getElementById('error-msg');
+            const ring = document.querySelector('.vault-ring');
+            const audioVideo = document.getElementById('audio-video');
+
+            if (input === SECRET) {
+                vault.classList.add('unlocked');
+                
+                // Play hidden audio video after unlock (browser allows audio after user interaction)
+                setTimeout(() => {
+                    audioVideo.muted = false;
+                    audioVideo.play().catch(e => console.log("Audio play failed:", e));
+                }, 600);
+
+                setTimeout(() => {
+                    main.style.display = 'block';
+                    void main.offsetWidth; 
+                    main.classList.add('visible');
+                }, 500);
+                
+                launchFireworks();
+                startTypewriter();
+                initScrollAnimations();
+            } else {
+                ring.classList.add('shake');
+                err.style.opacity = '1';
+                document.getElementById('secret-code').value = '';
+                setTimeout(() => {
+                    ring.classList.remove('shake');
+                    err.style.opacity = '0';
+                }, 1000);
+            }
+        }
+
+        document.getElementById('secret-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') unlockVault();
+        });
+
+        window.onload = () => {
+            document.getElementById('secret-code').focus();
+        };
+
+        // --- TYPEWRITER EFFECT ---
+        function startTypewriter() {
+            const text = "To my Mery Pyary Shohr,\n\nYou are the calm in my chaos and the gold in my life. Since July 10, 2026, you have been my safest place, my greatest laugh, and my forever baby.\n\nHappy 33rd Birthday, Mere Jan.";
+            const el = document.getElementById('typewriter');
+            const sig = document.getElementById('signature');
+            let i = 0;
+
+            function type() {
+                if (i < text.length) {
+                    if (text.charAt(i) === '\n') {
+                        el.innerHTML += '<br>';
+                    } else {
+                        el.innerHTML += text.charAt(i);
+                    }
+                    i++;
+                    setTimeout(type, 40);
+                } else {
+                    el.innerHTML += '<span class="cursor"></span>';
+                    setTimeout(() => sig.classList.add('show'), 500);
+                }
+            }
+            type();
+        }
+
+        // --- SCROLL ANIMATIONS ---
+        function initScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.polaroid').forEach(item => observer.observe(item));
+        }
+
+        // --- PHYSICS FIREWORKS ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        const colors = ['#d4af37', '#ffffff', '#fcf6ba'];
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.alpha = 1; this.friction = 0.96; this.gravity = 0.1;
+            }
+            update() {
+                this.vx *= this.friction; this.vy *= this.friction;
+                this.vy += this.gravity;
+                this.x += this.vx; this.y += this.vy;
+                this.alpha -= 0.015;
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+                ctx.fillStyle = this.color; ctx.fill();
+            }
+        }
+
+        function launchFireworks() {
+            for(let k=0; k<5; k++) {
+                setTimeout(() => {
+                    const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+                    const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
+                    for(let i=0; i<80; i++) particles.push(new Particle(x, y, colors[Math.floor(Math.random()*colors.length)]));
+                }, k * 200);
+            }
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(); particles[i].draw();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
